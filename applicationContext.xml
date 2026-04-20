@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:tx="http://www.springframework.org/schema/tx"
+	   xmlns:jaxws="http://cxf.apache.org/jaxws"
+	   xsi:schemaLocation="
+	   		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+	   		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+	   		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+	   		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
+	   		http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd"
+	   default-autowire="byName">
+	   
+
+	   	   
+	   <!-- 数据源 开区需要修改 -->
+	   <bean id="proxool" class="com.reign.framework.common.ProxoolStartup">
+	      <property name="driverUrl" value="jdbc:mysql://127.0.0.1:3306/gcld1?characterEncoding=utf8&amp;cacheServerConfiguration=true&amp;useLocalSessionState=true&amp;tcpRcvBuf=2048000"></property>
+	      <property name="configUrl" value="http://45.117.8.94:88/sgzb/zsggc/proxool4.xml"></property>
+	   </bean>
+	   
+	   <!--192.168.1.10 sdata -->
+        <bean id="dataSource_sdata" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+            <property name="driverClassName">
+                <value>com.mysql.jdbc.Driver</value>
+            </property>
+            <property name="url">
+                <value>jdbc:mysql://127.0.0.1:3306/gcld_sdata</value>
+            </property>
+            <property name="username">
+                <value>root</value>
+            </property>
+            <property name="password">
+                <value>123456.</value>
+            </property>
+        </bean>
+       <!-- <bean id="sessionFactory_Sdata" class="com.reign.framework.common.MyLocalSessionFactoryBean"> //-->
+       <bean id="sessionFactory_Sdata" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+            <property name="dataSource">
+                <ref bean="dataSource_sdata" />
+            </property>
+           
+         <!--   <property name="mappingJarLocations">
+		     <list>
+		        <value>classpath*:gcld-hbmxml.jar</value>
+		     </list>
+		   </property> //-->
+	      
+            <property name="mappingLocations">
+                <list>
+                  <value>classpath*:hbmxml/com/reign/**/*.hbm.xml</value>
+               
+                  <value>classpath*:com/reign/**/*.hbm.xml</value>
+                </list>
+            </property>  
+            
+            <property name="hibernateProperties">
+                <props>
+                    <prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+                    <prop key="hibernate.show_sql">true</prop>
+                    <prop key="hibernate.jdbc.fetch_size">100</prop>
+                    <prop key="hibernate.jdbc.batch_size">50</prop>
+                </props>
+            </property>
+        </bean>
+	   
+	   
+	   
+	    <!-- 数据源 -->
+        <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource" lazy-init="true">
+    		<property name="driverClassName">
+			<value>org.logicalcobwebs.proxool.ProxoolDriver</value>
+		</property>
+		<property name="url">
+			<value>proxool.gcld</value>
+		</property>
+        </bean>
+	   
+	   <!-- sessionFactory -->
+	   <bean id="sessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+	       <property name="configLocation" value="classpath:mybatis-config.xml"></property>
+	       <property name="dataSource" ref="dataSource"/>
+	   </bean>
+	   
+	    <!-- Annotation事务配置 -->
+        <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+            <property name="dataSource" >
+              <ref local="dataSource" />
+            </property>
+        </bean>       
+        <tx:annotation-driven transaction-manager="transactionManager" />
+	   
+	   <bean id="sDataLoader" class="com.reign.framework.common.cache.SDataLoader">
+	       <property name="sessionFactory">
+	           <ref local="sessionFactory_Sdata" />
+	       </property>
+	   </bean>
+	   
+	      	    <!-- 激活利用注解进行装配 -->
+	 <context:annotation-config/>
+	   <!-- add by ranhoo 扫描类-->
+	   <context:component-scan base-package="com.reign.gcld"/>
+</beans>
